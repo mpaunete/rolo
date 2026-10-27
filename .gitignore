@@ -1,0 +1,50 @@
+# ---------------------------------------------------------------
+# Firmware (PlatformIO)
+# ---------------------------------------------------------------
+.pio/
+# Generated per machine by PlatformIO (paths to your local toolchain)
+**/.vscode/c_cpp_properties.json
+**/.vscode/launch.json
+**/.vscode/ipch/
+**/.vscode/.browse.c_cpp.db*
+
+# ---------------------------------------------------------------
+# Python tools
+# ---------------------------------------------------------------
+.venv/
+venv/
+__pycache__/
+*.pyc
+
+# Recordings from rolo_stream.py and plots from analyze.py.
+# Keep a few good ones in firmware/tools/examples/ (not ignored).
+firmware/tools/*.csv
+firmware/tools/*-params.json
+firmware/tools/*.png
+
+# ---------------------------------------------------------------
+# KiCad (electronics)
+# ---------------------------------------------------------------
+# Local backups and per-user state
+electronics/.history/
+*-backups/
+*.bak
+*.kicad_prl
+*-unsaved-export-*
+_autosave-*
+\#auto_saved_files#
+fp-info-cache
+*.lck
+# Design-rule check reports (regenerated on demand)
+DRC.rpt
+ERC.rpt
+# Output directories (regenerated on demand)
+electronics/Output/
+
+# ---------------------------------------------------------------
+# Editors and operating systems
+# ---------------------------------------------------------------
+.DS_Store
+Thumbs.db
+*.swp
+*~

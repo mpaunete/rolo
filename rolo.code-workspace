@@ -1,0 +1,9 @@
+{
+  "folders": [
+    { "name": "rolo", "path": "." },
+    { "name": "controller (body)", "path": "firmware/controller" }
+  ],
+  "settings": {
+    "python.defaultInterpreterPath": "${workspaceFolder:rolo}/firmware/tools/.venv/bin/python"
+  }
+}

@@ -1,0 +1,211 @@
+(footprint "Fuse_RUEF500"
+	(version 20260206)
+	(generator "pcbnew")
+	(generator_version "10.0")
+	(layer "F.Cu")
+	(descr "PTC Resettable Fuse, Ihold = 3.0A, Itrip=5.1A, http://www.bourns.com/docs/Product-Datasheets/mfrg.pdf")
+	(tags "ptc resettable fuse polyfuse THT")
+	(property "Reference" "F1"
+		(at 2.55 -1.9 0)
+		(layer "F.SilkS")
+		(uuid "3099030c-367c-4c9e-ab3a-26d590578f62")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Value" "RUEF500"
+		(at 2.55 3.1 0)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "5add1129-16dc-45dd-94a7-0930c0a73068")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Datasheet" ""
+		(at 0 0 0)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "672c962f-dc1f-4121-9387-515dbeb6d0c6")
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+	)
+	(property "Description" "Fuse"
+		(at 0 0 0)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "dc9bef81-e5c5-46d2-81e2-3cbf2ba919f5")
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+	)
+	(property "KiLib_Generator" "fuse"
+		(at 0 0 0)
+		(layer "F.SilkS")
+		(hide yes)
+		(uuid "5814d1c3-e251-4a18-a19b-85e4afe38095")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property ki_fp_filters "*Fuse*")
+	(sheetname "/")
+	(sheetfile "rolo.kicad_sch")
+	(attr through_hole)
+	(duplicate_pad_numbers_are_jumpers no)
+	(fp_line
+		(start -1.1 -1)
+		(end -0.838 -1)
+		(stroke
+			(width 0.12)
+			(type solid)
+		)
+		(layer "F.SilkS")
+		(uuid "30b3e5a5-6642-4735-aa89-82b9de51aa6b")
+	)
+	(fp_line
+		(start -1.1 -0.702)
+		(end -1.1 -1)
+		(stroke
+			(width 0.12)
+			(type solid)
+		)
+		(layer "F.SilkS")
+		(uuid "3dfe526a-cc8f-4241-9575-83d9d1744372")
+	)
+	(fp_line
+		(start -1.1 2.2)
+		(end -1.1 0.702)
+		(stroke
+			(width 0.12)
+			(type solid)
+		)
+		(layer "F.SilkS")
+		(uuid "bd63a3ce-c52d-4748-a23f-a1342371571a")
+	)
+	(fp_line
+		(start 4.262 2.2)
+		(end -1.1 2.2)
+		(stroke
+			(width 0.12)
+			(type solid)
+		)
+		(layer "F.SilkS")
+		(uuid "a5e6950a-6c3e-45ae-8a08-90d17e93cdef")
+	)
+	(fp_line
+		(start 5.925655 -1)
+		(end 11.287655 -1)
+		(stroke
+			(width 0.12)
+			(type solid)
+		)
+		(layer "F.SilkS")
+		(uuid "d646fe69-79ef-4afc-b3e5-49d00b3c8d36")
+	)
+	(fp_line
+		(start 11.287655 -1)
+		(end 11.287655 0.498)
+		(stroke
+			(width 0.12)
+			(type solid)
+		)
+		(layer "F.SilkS")
+		(uuid "daed846b-e4b1-4bf3-b0d3-dd6b26bebd6a")
+	)
+	(fp_line
+		(start 11.287655 1.902)
+		(end 11.287655 2.2)
+		(stroke
+			(width 0.12)
+			(type solid)
+		)
+		(layer "F.SilkS")
+		(uuid "62679cc4-9749-4dce-a91a-4d5496a9b8d5")
+	)
+	(fp_line
+		(start 11.287655 2.2)
+		(end 11.025655 2.2)
+		(stroke
+			(width 0.12)
+			(type solid)
+		)
+		(layer "F.SilkS")
+		(uuid "8aad6625-6bc8-4337-8d77-9087ded8b266")
+	)
+	(fp_rect
+		(start -1.25 -1.15)
+		(end 11.43 2.35)
+		(stroke
+			(width 0.05)
+			(type solid)
+		)
+		(fill no)
+		(layer "F.CrtYd")
+		(uuid "7ace4e3b-72fd-4a05-a137-eaad00ccbc6b")
+	)
+	(fp_rect
+		(start -1 -0.9)
+		(end 11.18 2.1)
+		(stroke
+			(width 0.1)
+			(type solid)
+		)
+		(fill no)
+		(layer "F.Fab")
+		(uuid "cf53558a-c80c-4731-bf59-75c76695d626")
+	)
+	(fp_text user "${REFERENCE}"
+		(at 2.55 0.6 0)
+		(layer "F.Fab")
+		(uuid "8f25438a-662c-47ef-b097-f7b981f5f26e")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(pad "1" thru_hole circle
+		(at 0 0)
+		(size 2.01 2.01)
+		(drill 1.01)
+		(layers "*.Cu" "*.Mask")
+		(remove_unused_layers no)
+		(uuid "b124cb0b-bc78-46b4-a218-eb66c641cb20")
+	)
+	(pad "2" thru_hole circle
+		(at 10.16 1.2)
+		(size 2.01 2.01)
+		(drill 1.01)
+		(layers "*.Cu" "*.Mask")
+		(remove_unused_layers no)
+		(uuid "fb85c827-ac0d-4209-8d1c-c6b341d9934c")
+	)
+	(embedded_fonts no)
+	(model "${KICAD10_3DMODEL_DIR}/Fuse.3dshapes/Fuse_Bourns_MF-RG300.step"
+		(offset
+			(xyz 0 0 0)
+		)
+		(scale
+			(xyz 1 1 1)
+		)
+		(rotate
+			(xyz 0 0 0)
+		)
+	)
+)
