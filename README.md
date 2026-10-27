@@ -26,6 +26,9 @@ rebuild them and improve the electronics, with these goals:
 - **A 3S battery,** and better battery management later (for example, charging without
   unplugging it).
 - **Learning:** about balancing control and about AI on small robots.
+- **A robotics platform for kids:** children can program ROLO themselves with
+  [UIFlow](https://uiflow2.m5stack.com/) (M5Stack's block editor and MicroPython) on the
+  M5Stack head, driving the robot through the same commands as the gamepad and the web pages.
 
 <p align="center">
   <img src="docs/images/rolo-front.jpg" width="45%" alt="ROLO from the front: blue and black body, a screen with green reptile eyes, an axe on its arm, two stepper motors and large wheels">
@@ -57,6 +60,7 @@ The full clip, from the stand-up to driving around:
 | voice, vision, AI | planned |
 | second robot and games | planned |
 | battery management (charging in place) | planned |
+| kids' programming (UIFlow on the M5Stack head) | planned |
 
 ### Known issues in the first electronics version
 
@@ -181,12 +185,17 @@ stillness, pushes, drive steps, limits) and saves a plot.
 
 ## Roadmap
 
-- **Head**: an M5Stack CoreS3 for the face (2" screen), camera and microphones, linked to the
-  body over UART. Later, offline voice (wake word and commands), vision, and WiFi moved from
-  the body to the head.
+- **Heads**: interchangeable heads on the same body, linked over UART: a plain ESP32-C3
+  with a 2-inch LCD, an M5Stack CoreS3 (face, camera, microphones, speaker) and a Seeed Studio
+  vision head. They share one firmware project with a build per head, and each head tells
+  the body what it can do. Later: offline voice (wake word and commands), vision, and WiFi
+  moved from the body to the head.
 - **Optional AI**: a local server for conversation and speech, or an on-robot LLM module.
 - **Games**: two robots, a referee page, and living-room battles (knock off the other robot's
   accessories, jousting, IR tag).
+- **Kids' programming**: UIFlow on the CoreS3 head, with blocks for driving, the arm, the
+  LEDs and the robot's events (fell over, stood up, battery low), so children can write their
+  own behaviours and games.
 
 ## Licence
 
