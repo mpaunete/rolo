@@ -92,7 +92,11 @@ The planned fixes for the electronics and the mechanical parts are listed in
 
 | folder | contents |
 |---|---|
-| `firmware/controller/` | the robot's firmware (PlatformIO, C++) |
+| `firmware/controller/` | the body's firmware: balancing, driving, arm, stand-up, web pages (PlatformIO, C++) |
+| `firmware/common/link/` | shared by the body and the heads: the messages on the body–head UART link |
+| `firmware/head-c3lcd/` | head: ESP32-C3 SuperMini with a Waveshare 2" LCD (the current head; code to be added) |
+| `firmware/head-cores3/` | head: M5Stack CoreS3 (face, camera, microphones, speaker) |
+| `firmware/head-seeed/` | head: ESP32-S3 DevKitC with a Seeed Grove Vision AI V2 and a ReSpeaker Lite |
 | `firmware/tools/` | `rolo_stream.py` (recorder and test runner), `analyze.py` (report and plots) |
 | `electronics/` | KiCad project for the controller board, Gerbers in `Output/` |
 | `mechanical/` | mechanical design, FreeCAD (to be added) |

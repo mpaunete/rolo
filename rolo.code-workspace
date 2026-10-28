@@ -1,9 +1,11 @@
 {
   "folders": [
     { "name": "rolo", "path": "." },
-    { "name": "controller (body)", "path": "firmware/controller" }
+    { "name": "controller (body)", "path": "firmware/controller" },
+    { "name": "head (CoreS3)", "path": "firmware/head-cores3" }
   ],
   "settings": {
-    "python.defaultInterpreterPath": "${workspaceFolder:rolo}/firmware/tools/.venv/bin/python"
+    "python.defaultInterpreterPath": "${workspaceFolder:rolo}/firmware/tools/.venv/bin/python",
+    "platformio-ide.activateProjectOnTextEditorChange": true
   }
 }
