@@ -1,15 +1,14 @@
 #include "net.h"
-#include "console.h"
 
 #include <Arduino.h>
 #include <WiFi.h>
 #include <Preferences.h>
 #include <esp_wifi.h>
+#include <esp_mac.h>
 
 namespace net {
     namespace {
         constexpr const char *STORAGE = "net";
-        constexpr const char *DEFAULT_AP_NAME = "rolo";
         // First-boot access point. The password is public (it's in this file and the README):
         // change it with the console commands "apname <name>" and "appass <password>"
         constexpr const char *DEFAULT_AP_PASSWORD = "rolorolo";
@@ -23,9 +22,21 @@ namespace net {
             AccessPoint,
         };
 
+        Config settings;   // from begin(): AP name, power saving, where messages go
+
         State state = State::Connecting;
         uint32_t stateSince = 0;
         uint32_t lastRetry = 0;
+
+        // Default access-point name: the prefix plus the last 3 bytes of this chip's
+        // factory MAC address, e.g. "rolo-3F2A91". Unique per robot, and the same every start.
+        String defaultApName() {
+            uint8_t mac[6];
+            esp_efuse_mac_get_default(mac);
+            char name[32];
+            snprintf(name, sizeof(name), "%s-%02X%02X%02X", settings.apName, mac[3], mac[4], mac[5]);
+            return String(name);
+        }
 
         void enter(State next) {
             state = next;
@@ -42,10 +53,10 @@ namespace net {
 
         void startAccessPoint() {
             Preferences prefs;
-            String name = DEFAULT_AP_NAME;
+            String name = defaultApName();
             String password = DEFAULT_AP_PASSWORD;
             if (prefs.begin(STORAGE, true)) {
-                name = prefs.getString("apName", DEFAULT_AP_NAME);
+                name = prefs.getString("apName", defaultApName());
                 password = prefs.getString("apPassword", DEFAULT_AP_PASSWORD);
                 prefs.end();
             }
@@ -57,7 +68,7 @@ namespace net {
             lastRetry = millis();
             enter(State::AccessPoint);
 
-            console::out.printf("WiFi: access point '%s' at %s\n", name.c_str(), WiFi.softAPIP().toString().c_str());
+            settings.out->printf("WiFi: access point '%s' at %s\n", name.c_str(), WiFi.softAPIP().toString().c_str());
         }
 
         void stopAccessPoint() {
@@ -67,16 +78,17 @@ namespace net {
         }
     }
 
-    void begin() {
+    void begin(const Config &config) {
+        settings = config;
         WiFi.mode(WIFI_STA);
-        WiFi.setSleep(true);
+        WiFi.setSleep(settings.powerSave);
         WiFi.setAutoReconnect(true);
 
         if (hasStoredCredentials()) {
             WiFi.begin();
             enter(State::Connecting);
         } else {
-            console::out.println("WiFi: no network configured");
+            settings.out->println("WiFi: no network configured");
             startAccessPoint();
         }
     }
@@ -91,7 +103,7 @@ namespace net {
                     enter(State::Connected);
                     printStatus();
                 } else if ((uint32_t)(now - stateSince) > CONNECT_TIMEOUT_MS) {
-                    console::out.println("WiFi: could not connect");
+                    settings.out->println("WiFi: could not connect");
                     startAccessPoint();
                 }
                 break;
@@ -100,7 +112,7 @@ namespace net {
                 if (connected) {
                     stateSince = now;
                 } else if ((uint32_t)(now - stateSince) > CONNECT_TIMEOUT_MS) {
-                    console::out.println("WiFi: connection lost");
+                    settings.out->println("WiFi: connection lost");
                     startAccessPoint();
                 }
                 break;
@@ -147,11 +159,11 @@ namespace net {
 
     void printStatus() {
         if (state == State::AccessPoint) {
-            console::out.printf("WiFi: access point at %s\n", WiFi.softAPIP().toString().c_str());
+            settings.out->printf("WiFi: access point at %s\n", WiFi.softAPIP().toString().c_str());
         } else if (WiFi.status() == WL_CONNECTED) {
-            console::out.printf("WiFi: connected to '%s', IP %s\n", WiFi.SSID().c_str(), WiFi.localIP().toString().c_str());
+            settings.out->printf("WiFi: connected to '%s', IP %s\n", WiFi.SSID().c_str(), WiFi.localIP().toString().c_str());
         } else {
-            console::out.println("WiFi: connecting...");
+            settings.out->println("WiFi: connecting...");
         }
     }
 

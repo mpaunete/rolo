@@ -43,7 +43,7 @@ void setup() {
     leds::begin();
     arm::begin();
     battery::begin();
-    net::begin();
+    net::begin({"rolo", true, &console::out});
     gamepad::begin();
     web::begin();
 
