@@ -6,6 +6,10 @@
 
 // Commands and messages, from and to both the serial port and the web terminal.
 namespace console {
+    // Where a command line came from: passwords are only accepted over USB serial,
+    // because the web link (ws://) isn't encrypted
+    enum class Source { Serial, Web };
+
     // Everything the robot prints: goes to the serial port, and is kept for the web
     // terminal. Use it like Serial: console::out.printf(...), console::out.println(...).
     // Safe from any task.
@@ -16,8 +20,8 @@ namespace console {
     };
     extern Output out;
 
-    void poll();                    // from loop(): reads command lines from the serial port
-    void run(const char *line);     // runs one command line (serial or web terminal)
+    void poll();                                  // from loop(): reads command lines from the serial port
+    void run(const char *line, Source source);    // runs one command line (serial or web terminal)
 
     // For the web terminal: the text printed since position 'from', at most size - 1
     // characters, '\0'-terminated. Moves 'from' on. If 'from' is older than the text

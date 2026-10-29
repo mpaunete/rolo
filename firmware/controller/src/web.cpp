@@ -391,7 +391,7 @@ namespace web {
                 }
             }
 
-            console::run(text);
+            console::run(text, console::Source::Web);
         }
 
         void onEvent(AsyncWebSocket *server, AsyncWebSocketClient *client,

@@ -251,7 +251,7 @@ namespace console {
         return n;
     }
 
-    void run(const char *text) {
+    void run(const char *text, Source source) {
         if (text[0] == '\0') {
             return;
         }
@@ -261,6 +261,13 @@ namespace console {
         echo(text);
         if (!secret(text)) {
             stream::event(text);   // recorded alongside the samples, never WiFi passwords
+        }
+
+        // Passwords travel unencrypted over the web link: only take them from USB serial
+        if (secret(text) && source != Source::Serial) {
+            out.println("refused: set WiFi passwords over USB serial, not the web terminal");
+            xSemaphoreGive(runLock);
+            return;
         }
 
         char line[MAX_LINE];
@@ -331,7 +338,7 @@ namespace console {
 
             if (c == '\n') {
                 serialLine[serialLength] = '\0';
-                run(serialLine);
+                run(serialLine, Source::Serial);
                 serialLength = 0;
                 continue;
             }
