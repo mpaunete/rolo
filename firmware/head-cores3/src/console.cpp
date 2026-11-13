@@ -2,6 +2,7 @@
 
 #include <Arduino.h>
 #include <net.h>
+#include "stats.h"
 #include <string.h>
 
 namespace console {
@@ -47,8 +48,18 @@ namespace console {
                 }
                 net::setApPassword(password);
                 Serial.println("ok: access point password saved");
+            } else if (strcmp(command, "stats") == 0) {
+                char *onOff = strtok_r(nullptr, " ", &rest);
+                if (onOff == nullptr) {
+                    stats::print();
+                } else if (strcmp(onOff, "on") == 0 || strcmp(onOff, "off") == 0) {
+                    stats::printEverySecond(strcmp(onOff, "on") == 0);
+                } else {
+                    Serial.println("usage: stats [on|off]");
+                }
             } else if (strcmp(command, "help") == 0) {
                 Serial.println("net, wifi <ssid> <password>, forget, apname <name>, appass <password>");
+                Serial.println("stats, stats on|off");
             } else {
                 Serial.printf("unknown command: %s (try 'help')\n", command);
             }

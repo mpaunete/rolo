@@ -1,12 +1,19 @@
 #include "eyes.h"
 
+#include "stats.h"
+
 #include <M5Unified.h>
 
 namespace eyes {
     namespace {
         // Everything is drawn into this off-screen image first, then copied to the screen
-        // in one go, so the screen never shows a half-drawn frame (no flicker)
+        // in one go, so the screen never shows a half-drawn frame (no flicker). It only
+        // covers the eyes (plus a margin) and moves with them: smaller means faster to draw
+        // and to send, and small enough for the fast internal RAM.
         M5Canvas canvas(&M5.Display);
+        constexpr int CANVAS_W = 260;       // the eyes and their glow are 244 x 124
+        constexpr int CANVAS_H = 140;
+        bool useDma = false;                // internal RAM: send with DMA while the CPU moves on
 
         constexpr int EYE_W = 80;           // pixels
         constexpr int EYE_H = 100;
@@ -33,20 +40,43 @@ namespace eyes {
         uint32_t nextBlink = 0;   // millis() when the next blink starts
 
         // Looking around
-        constexpr int LOOK_MAX_X = 35;               // pixels left/right (keeps the glow on screen)
-        constexpr int LOOK_MAX_Y = 40;               // pixels up/down
+        constexpr int LOOK_MAX_X = 55;               // pixels left/right (keeps the glow on screen)
+        constexpr int LOOK_MAX_Y = 60;               // pixels up/down
         constexpr uint32_t LOOK_MIN_GAP_MS = 1500;   // time between glances, chosen at random
         constexpr uint32_t LOOK_MAX_GAP_MS = 5000;
         constexpr int LOOK_CENTRE_PERCENT = 40;      // how often a glance goes back to the middle
-        constexpr float LOOK_TAU = 0.04f;            // seconds: how lazily they follow (bigger = slower)
+        constexpr float LOOK_TAU = 0.01f;            // seconds: how lazily they follow (bigger = slower)
+        constexpr float FOLLOW_TAU = 0.4f;          // seconds: the same when following a face (smooths
+                                                     // out the 5-10 detections a second)
+
+        // Happy eyes (when following a face): a black ellipse cuts into the bottom of each
+        // eye and leaves an upward arch
+        constexpr float HAPPY_TAU = 0.25f;     // seconds to ease into / out of happy
+        constexpr float HAPPY_CUT = 0.45f;     // how far up the cut reaches when fully happy (x eye height)
+
+        float happy = 0.0f;                    // 0 = normal, 1 = fully happy
 
         int centreX = 0;   // middle of the screen, set in begin()
         int centreY = 0;
+
+        // What's on the screen now: where the canvas was last sent, and what it showed,
+        // so a frame that would look the same isn't drawn or sent again
+        struct Shown {
+            int canvasX, canvasY;   // where the canvas went on the screen
+            int x, y;               // eye centre
+            int height;             // eye height (blinking)
+            int cut;                // happy cut, in pixels (-1: none)
+        };
+        Shown shown = {0, 0, -1000, -1000, -1, -1};
 
         float lookX = 0.0f, lookY = 0.0f;       // where the eyes are now, pixels from the centre
         float targetX = 0.0f, targetY = 0.0f;   // where they're heading
         uint32_t nextLook = 0;                  // millis() of the next glance
         uint32_t lastUpdate = 0;
+
+        // Set by the face task (on the other core): follow this point instead of looking around
+        volatile bool following = false;
+        volatile float followX = 0.0f, followY = 0.0f;
 
         // The phosphor colour at a brightness from 0 (off) to 1 (full); above 1 it turns
         // whiter, like a phosphor driven hard
@@ -64,8 +94,31 @@ namespace eyes {
             canvas.fillRoundRect(x - w / 2, y - h / 2, w, h, r, colour);
         }
 
-        // One eye, centred on (x, y). A smaller height is a (partly) closed eye.
-        void drawEye(int x, int y, int height) {
+        // How far up the happy cut reaches, in pixels (-1: not happy, no cut)
+        int happyCut(float happy) {
+            return happy > 0.01f ? (int)(happy * HAPPY_CUT * EYE_H) : -1;
+        }
+
+        // Clear to black the part of the old canvas area that the new one doesn't cover
+        // (the eyes moved away from it): up to four strips around the new rectangle
+        void clearUncovered(int oldX, int oldY, int newX, int newY) {
+            int oldR = oldX + CANVAS_W, oldB = oldY + CANVAS_H;
+            int newR = newX + CANVAS_W, newB = newY + CANVAS_H;
+            auto strip = [](int x0, int y0, int x1, int y1) {
+                if (x1 > x0 && y1 > y0) {
+                    M5.Display.fillRect(x0, y0, x1 - x0, y1 - y0, TFT_BLACK);
+                }
+            };
+            strip(oldX, oldY, oldR, min(oldB, newY));                     // above the new one
+            strip(oldX, max(oldY, newB), oldR, oldB);                     // below it
+            int top = max(oldY, newY), bottom = min(oldB, newB);         // beside it
+            strip(oldX, top, min(oldR, newX), bottom);
+            strip(max(oldX, newR), top, oldR, bottom);
+        }
+
+        // One eye, centred on (x, y) in canvas pixels. A smaller height is a (partly)
+        // closed eye, and cut (pixels, -1: none) curves its bottom upwards into a smile.
+        void drawEye(int x, int y, int height, int cut) {
             // Glow: from the biggest, dimmest halo inwards
             for (int i = GLOW_LAYERS; i >= 1; i--) {
                 int grow = i * GLOW_STEP;
@@ -75,6 +128,14 @@ namespace eyes {
             if (height > 2 * CORE_INSET) {
                 rounded(x, y, EYE_W - 2 * CORE_INSET, height - 2 * CORE_INSET,
                         RADIUS - CORE_INSET, shade(1.4f));            // its hot core
+            }
+
+            // Happy: cut the bottom away with a black ellipse, rising as happy goes to 1
+            if (cut >= 0) {
+                int cutTop = y + height / 2 - cut;                                 // where the arch ends
+                int rx = EYE_W * 3 / 4;                                           // wider than the eye and its glow
+                int ry = EYE_H / 2;
+                canvas.fillEllipse(x, cutTop + ry, rx, ry, TFT_BLACK);
             }
         }
 
@@ -94,9 +155,13 @@ namespace eyes {
             return fabsf(2.0f * phase - 1.0f);    // 1 -> 0 (closed halfway through) -> 1
         }
 
-        // Now and then pick a new place to look, and drift towards it
+        // Follow a face if there is one; otherwise, now and then pick a new place to look.
+        // Either way, drift towards it, and ease the happy look in or out.
         void look(uint32_t now) {
-            if ((int32_t)(now - nextLook) >= 0) {
+            if (following) {
+                targetX = followX * LOOK_MAX_X;
+                targetY = followY * LOOK_MAX_Y;
+            } else if ((int32_t)(now - nextLook) >= 0) {
                 if (random(100) < LOOK_CENTRE_PERCENT) {
                     targetX = 0.0f;
                     targetY = 0.0f;
@@ -110,9 +175,14 @@ namespace eyes {
             // Ease towards the target: the same smoothing as the body's filters
             float dt = (now - lastUpdate) / 1000.0f;
             lastUpdate = now;
-            float k = dt / (LOOK_TAU + dt);
+            float tau = following ? FOLLOW_TAU : LOOK_TAU;
+            float k = dt / (tau + dt);
             lookX += k * (targetX - lookX);
             lookY += k * (targetY - lookY);
+
+            // Happy while following a face, eased in and out the same way
+            float kHappy = dt / (HAPPY_TAU + dt);
+            happy += kHappy * ((following ? 1.0f : 0.0f) - happy);
         }
     }
 
@@ -120,29 +190,89 @@ namespace eyes {
         centreX = M5.Display.width() / 2;
         centreY = M5.Display.height() / 2;
 
-        canvas.setPsram(true);   // 320 x 240 x 2 bytes = 150 kB: put it in the 8 MB PSRAM
-        canvas.createSprite(M5.Display.width(), M5.Display.height());
+        // Internal RAM if there's room (fast, and the screen can be fed from it by DMA),
+        // otherwise PSRAM and plain sending
+        canvas.setPsram(false);
+        useDma = canvas.createSprite(CANVAS_W, CANVAS_H) != nullptr;
+        if (!useDma) {
+            Serial.println("eyes: no room in internal RAM for the canvas, using PSRAM (slower)");
+            canvas.setPsram(true);
+            canvas.createSprite(CANVAS_W, CANVAS_H);
+        }
+
+        M5.Display.fillScreen(TFT_BLACK);
+        if (useDma) {
+            M5.Display.startWrite();   // keep the screen's bus for ourselves, so DMA can run between frames
+        }
         nextBlink = millis() + BLINK_MIN_GAP_MS;
         lastUpdate = millis();
         nextLook = millis() + LOOK_MIN_GAP_MS;
     }
 
     void update() {
-        canvas.fillScreen(TFT_BLACK);
         uint32_t now = millis();
         look(now);
 
         int height = CLOSED_H + (int)((EYE_H - CLOSED_H) * openness(now));
         int x = centreX + (int)lookX;
         int y = centreY + (int)lookY;
-        drawEye(x - EYE_OFFSET, y, height);
-        drawEye(x + EYE_OFFSET, y, height);
+        int cut = happyCut(happy);
 
-        // Scanlines: a dark band every few rows, over everything
-        for (int y = 0; y < canvas.height(); y += SCANLINE_EVERY) {
-            canvas.fillRect(0, y, canvas.width(), SCANLINE_THICK, TFT_BLACK);
+        // Nothing would change on the screen: don't draw or send anything
+        if (x == shown.x && y == shown.y && height == shown.height && cut == shown.cut) {
+            return;
         }
 
-        canvas.pushSprite(0, 0);              // copy the finished frame to the screen
+        // The previous frame may still be on its way to the screen: the canvas is ours
+        // again once it has gone (usually it has, during loop()'s delay)
+        uint32_t waitStart = micros();
+        if (useDma) {
+            M5.Display.waitDMA();
+        }
+        uint32_t waitUs = micros() - waitStart;
+
+        // Put the canvas around the eyes, kept on the screen
+        int canvasX = constrain(x - CANVAS_W / 2, 0, (int)M5.Display.width() - CANVAS_W);
+        int canvasY = constrain(y - CANVAS_H / 2, 0, (int)M5.Display.height() - CANVAS_H);
+        int ex = x - canvasX;   // the eye centre, in canvas pixels
+        int ey = y - canvasY;
+
+        uint32_t drawStart = micros();
+        canvas.fillScreen(TFT_BLACK);
+        drawEye(ex - EYE_OFFSET, ey, height, cut);
+        drawEye(ex + EYE_OFFSET, ey, height, cut);
+
+        // Scanlines: a dark band every few rows, lined up with the screen's rows (not the
+        // canvas's), so they stay still while the canvas moves
+        for (int row = -(canvasY % SCANLINE_EVERY); row < CANVAS_H; row += SCANLINE_EVERY) {
+            canvas.fillRect(0, row, CANVAS_W, SCANLINE_THICK, TFT_BLACK);
+        }
+        uint32_t drawUs = micros() - drawStart;
+
+        // Where the eyes were but the canvas no longer reaches: back to black
+        uint32_t pushStart = micros();
+        if (shown.height >= 0) {
+            clearUncovered(shown.canvasX, shown.canvasY, canvasX, canvasY);
+        }
+        if (useDma) {
+            // Start sending and return: the CPU is free while it goes
+            M5.Display.pushImageDMA(canvasX, canvasY, CANVAS_W, CANVAS_H,
+                                    (const m5gfx::swap565_t *)canvas.getBuffer());
+        } else {
+            canvas.pushSprite(canvasX, canvasY);
+        }
+        stats::eyesDone(drawUs, waitUs + (micros() - pushStart));
+
+        shown = {canvasX, canvasY, x, y, height, cut};
+    }
+
+    void lookAt(float x, float y) {
+        followX = constrain(x, -1.0f, 1.0f);
+        followY = constrain(y, -1.0f, 1.0f);
+        following = true;
+    }
+
+    void lookAround() {
+        following = false;
     }
 }
