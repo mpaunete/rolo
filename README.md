@@ -23,6 +23,8 @@ rebuild them and improve the electronics, with these goals:
 - **Maximum customisation:** most of the parts redesigned in FreeCAD.
 - **More sensors and accessories** than the original designs allow.
 - **AI experimentation:** a face, voice, vision and a personality, in the spirit of Anki Vector.
+  ROLO itself keeps an expressive face; voice and vision are planned for a next robot (see
+  [Roadmap](#roadmap)).
 - **A 3S battery,** and better battery management later (for example, charging without
   unplugging it).
 - **Learning:** about balancing control and about AI on small robots.
@@ -56,8 +58,7 @@ The full clip, from the stand-up to driving around:
 | battery warnings | working |
 | controller PCB (KiCad) | first version: mostly works, improvements needed (see below); files in `electronics/` |
 | mechanical parts (FreeCAD) | designed, not yet published here |
-| head: face, camera, microphones (M5Stack CoreS3) | hardware chosen, firmware not started |
-| voice, vision, AI | planned |
+| voice, vision, AI | not on ROLO: tried with an M5Stack CoreS3 head, which didn't work well enough (see [Roadmap](#roadmap)); planned for a next robot |
 | second robot and games | planned |
 | battery management (charging in place) | planned |
 | kids' programming (UIFlow on the M5Stack head) | planned |
@@ -95,8 +96,6 @@ The planned fixes for the electronics and the mechanical parts are listed in
 | `firmware/controller/` | the body's firmware: balancing, driving, arm, stand-up, web pages (PlatformIO, C++) |
 | `firmware/common/link/` | shared by the body and the heads: the messages on the body–head UART link |
 | `firmware/head-c3lcd/` | head: ESP32-C3 SuperMini with a Waveshare 2" LCD (the current head; code to be added) |
-| `firmware/head-cores3/` | head: M5Stack CoreS3 (face, camera, microphones, speaker) |
-| `firmware/head-seeed/` | head: ESP32-S3 DevKitC with a Seeed Grove Vision AI V2 and a ReSpeaker Lite |
 | `firmware/tools/` | `rolo_stream.py` (recorder and test runner), `analyze.py` (report and plots) |
 | `electronics/` | KiCad project for the controller board, Gerbers in `Output/` |
 | `mechanical/` | mechanical design, FreeCAD (to be added) |
@@ -189,11 +188,13 @@ stillness, pushes, drive steps, limits) and saves a plot.
 
 ## Roadmap
 
-- **Heads**: interchangeable heads on the same body, linked over UART: a plain ESP32-C3
-  with a 2-inch LCD, an M5Stack CoreS3 (face, camera, microphones, speaker) and a Seeed Studio
-  vision head. They share one firmware project with a build per head, and each head tells
-  the body what it can do. Later: offline voice (wake word and commands), vision, and WiFi
-  moved from the body to the head.
+- **Heads**: interchangeable heads on the same body, linked over UART. The head is an
+  ESP32-C3 SuperMini with a 2-inch LCD, for the eyes.
+- **No vision on ROLO**: an M5Stack CoreS3 head (camera, face following) was tried and
+  dropped. Its camera's field of view is too narrow for a robot on the floor (it can't see
+  the face of someone sitting a metre away), and compressing video in software takes most of
+  a processor core. Its code is kept on the `head-cores3` branch. Vision and voice are
+  planned for a next robot, designed for them from the start.
 - **Optional AI**: a local server for conversation and speech, or an on-robot LLM module.
 - **Games**: two robots, a referee page, and living-room battles (knock off the other robot's
   accessories, jousting, IR tag).
