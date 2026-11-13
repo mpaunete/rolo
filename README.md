@@ -58,6 +58,7 @@ The full clip, from the stand-up to driving around:
 | battery warnings | working |
 | controller PCB (KiCad) | first version: mostly works, improvements needed (see below); files in `electronics/` |
 | mechanical parts (FreeCAD) | designed, not yet published here |
+| head: eyes on a Waveshare 2" LCD (ESP32-C3 SuperMini) | CRT-style eyes with 8 moods; not yet linked to the body |
 | voice, vision, AI | not on ROLO: tried with an M5Stack CoreS3 head, which didn't work well enough (see [Roadmap](#roadmap)); planned for a next robot |
 | second robot and games | planned |
 | battery management (charging in place) | planned |
@@ -69,6 +70,10 @@ The full clip, from the stand-up to driving around:
   to disturb WiFi and the IMU. A capacitor at the servo, or a separate supply for it, is needed.
 - Few spare GPIOs are left on the controller for new sensors and accessories.
 - No charging in place yet: the battery has to be unplugged to charge.
+- The head's 5 V comes from the Aux connector (J12), which is before the Schottky diode. With
+  the head's USB plugged in, it powers the body backwards: the ESP32, the servos and, through
+  the buck converter, even the motor supply. Until the next board, unplug the head (or its
+  5 V wire) before connecting its USB, or feed it from after the diode.
 
 The planned fixes for the electronics and the mechanical parts are listed in
 [docs/next-revision.md](docs/next-revision.md).
@@ -95,7 +100,7 @@ The planned fixes for the electronics and the mechanical parts are listed in
 |---|---|
 | `firmware/controller/` | the body's firmware: balancing, driving, arm, stand-up, web pages (PlatformIO, C++) |
 | `firmware/common/link/` | shared by the body and the heads: the messages on the body–head UART link |
-| `firmware/head-c3lcd/` | head: ESP32-C3 SuperMini with a Waveshare 2" LCD (the current head; code to be added) |
+| `firmware/head-c3lcd/` | head: ESP32-C3 SuperMini with a Waveshare 2" LCD: the eyes, with moods |
 | `firmware/tools/` | `rolo_stream.py` (recorder and test runner), `analyze.py` (report and plots) |
 | `electronics/` | KiCad project for the controller board, Gerbers in `Output/` |
 | `mechanical/` | mechanical design, FreeCAD (to be added) |
@@ -128,6 +133,17 @@ pio run -t upload
 
 The project uses the Bluepad32 Arduino core (classic Bluetooth gamepad support), which
 PlatformIO downloads automatically through `platform_packages` in `platformio.ini`.
+
+The head (unplug it from the body first, see [Known issues](#known-issues-in-the-first-electronics-version)):
+
+```bash
+cd firmware/head-c3lcd
+pio run -t upload
+```
+
+Its serial console (115200 baud) is for trying the eyes without the body: `mood` lists the
+moods and `mood <name>` shows one, `demo` cycles through them, and `glow`, `curve` and
+`gamma` tune how the glow looks on the screen.
 
 ## First setup
 

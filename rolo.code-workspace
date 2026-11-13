@@ -1,7 +1,8 @@
 {
   "folders": [
     { "name": "rolo", "path": "." },
-    { "name": "controller (body)", "path": "firmware/controller" }
+    { "name": "controller (body)", "path": "firmware/controller" },
+    { "name": "head (C3 + LCD)", "path": "firmware/head-c3lcd" }
   ],
   "settings": {
     "python.defaultInterpreterPath": "${workspaceFolder:rolo}/firmware/tools/.venv/bin/python",
